@@ -1,13 +1,17 @@
 pragma solidity ^0.8.0;
 
 import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
-import "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
-import "./AdvancedBadgeSigUtils.sol";
-import "forge-std/console.sol";
 
-contract AdvancedBadge is AdvancedBadgeSigUtils, ERC721Enumerable, Ownable {
+contract AdvancedBadge is ERC721Enumerable {
+
+    struct Event {
+        address creator;
+        bytes mintingConstraints;
+    }
+
+    bytes32 constant public BADGE_TYPE_HASH = keccak256(
+        "Event(address creator,bytes mintingConstraints)"
+    );
 
     event NewEvent(
         address indexed creator,
@@ -21,11 +25,24 @@ contract AdvancedBadge is AdvancedBadgeSigUtils, ERC721Enumerable, Ownable {
     constructor(string memory name, string memory symbol) ERC721(name, symbol){
     }
 
+    // computes the hash of a permit
+    function getStructHash(Event memory _event)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return
+            keccak256(
+                abi.encode(
+                    BADGE_TYPE_HASH,
+                    _event.creator,
+                    _event.mintingConstraints
+                )
+            );
+    }
+
     function createEvent(
-        Event calldata _event,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        Event calldata _event
     ) public returns(bytes32 eventHash) {
         eventHash = getStructHash(_event);
 
@@ -33,8 +50,8 @@ contract AdvancedBadge is AdvancedBadgeSigUtils, ERC721Enumerable, Ownable {
 
         require(eventStruct.creator == address(0), "Event already exists");
         require(
-            getSigner(eventHash, v, r, s) == _event.creator,
-            "Invalid signature"
+            _event.creator == msg.sender,
+            "Creator needs to be msg.sender"
         );
 
         eventStruct.creator = _event.creator;
