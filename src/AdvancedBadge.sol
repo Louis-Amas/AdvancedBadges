@@ -25,6 +25,9 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
     // TokenId to  characteristics
     mapping(uint256 => bytes) public characteristicsByTokenId;
 
+    // TokenId to eventsHash
+    mapping(uint256 => bytes32) public eventsHashByTokenId;
+
     constructor(address ConstraintAddress, string memory name, string memory symbol)
         EIP712("AdvancedBadge", "1")
         ERC721(name, symbol)
@@ -98,6 +101,7 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
 
         _mint(to, lastERC721Id);
         characteristicsByTokenId[lastERC721Id] = characteristics;
+        eventsHashByTokenId[lastERC721Id] = eventHash;
         lastERC721Id++;
     }
 }
