@@ -3,10 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
 
-contract SignatureTest is Test {
+import "./SignatureUtils.t.sol";
+
+contract SignatureTest is SignatureTestUtils {
     uint256 internal creatorPrivateKey;
     address internal creator;
 
@@ -18,11 +19,9 @@ contract SignatureTest is Test {
     function testSignature() public {
         bytes32 hash = keccak256("Test...");
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(creatorPrivateKey, hash);
+        bytes memory signature = SignatureTestUtils.sign(creatorPrivateKey, hash); 
 
-        bytes memory joinSignature = bytes.concat(bytes.concat(r, s), "\x1b");
-
-        bool isValid = SignatureChecker.isValidSignatureNow(creator, hash, joinSignature);
+        bool isValid = SignatureChecker.isValidSignatureNow(creator, hash, signature);
 
         assertEq(isValid, true);
     }

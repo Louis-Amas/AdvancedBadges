@@ -5,12 +5,12 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/MintingConstraint.sol";
 
-contract SignatureTest is Test {
-    bytes private constant passedDate = "\x00\x00\x01\x86\x74\x70\xd6\x67";
+bytes constant PASSED_DATE_AS_BYTES = "\x00\x00\x01\x86\x74\x70\xd6\x67";
 
-    bytes private constant notYetPassedDate = "\x00\x00\x02\x03\x5c\x0e\xa0\xe0";
+bytes constant NOT_YET_PASSED_DATA_AS_BYTES = "\x00\x00\x02\x03\x5c\x0e\xa0\xe0";
 
-    uint256 private constant currentDate = 1676991391466;
+contract MintingConstraintTest is Test {
+    uint256 public constant currentDate = 1676991391466;
 
     MintingConstraint mintingConstraint;
 
@@ -20,7 +20,7 @@ contract SignatureTest is Test {
     }
 
     function testCanMintCurrentDateAboveConstraint() public {
-        bytes memory constraints = bytes.concat(bytes.concat("\x00", passedDate));
+        bytes memory constraints = bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES));
 
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
 
@@ -28,7 +28,7 @@ contract SignatureTest is Test {
     }
 
     function testCanMintCurrentDateBelownConstraint() public {
-        bytes memory constraints = bytes.concat(bytes.concat("\x01", notYetPassedDate));
+        bytes memory constraints = bytes.concat(bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES));
 
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
 
@@ -36,7 +36,7 @@ contract SignatureTest is Test {
     }
 
     function testCantMintCurrentDateAboveConstraint() public {
-        bytes memory constraints = bytes.concat(bytes.concat("\x00", notYetPassedDate));
+        bytes memory constraints = bytes.concat(bytes.concat("\x00", NOT_YET_PASSED_DATA_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is greater than required");
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
@@ -45,7 +45,7 @@ contract SignatureTest is Test {
     }
 
     function testCantMintCurrentDateBelownConstraint() public {
-        bytes memory constraints = bytes.concat(bytes.concat("\x01", passedDate));
+        bytes memory constraints = bytes.concat(bytes.concat("\x01", PASSED_DATE_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is lower than required");
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
@@ -55,7 +55,7 @@ contract SignatureTest is Test {
 
     function testCanMintCombineBelowAndAboveConstraint() public {
         bytes memory constraints =
-            bytes.concat(bytes.concat("\x00", passedDate), bytes.concat("\x01", notYetPassedDate));
+            bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES), bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES));
 
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
 
@@ -63,7 +63,7 @@ contract SignatureTest is Test {
     }
 
     function testCanMintCombineFailedBelowAndAboveConstraint() public {
-        bytes memory constraints = bytes.concat(bytes.concat("\x00", passedDate), bytes.concat("\x01", passedDate));
+        bytes memory constraints = bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES), bytes.concat("\x01", PASSED_DATE_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is lower than required");
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
@@ -73,7 +73,7 @@ contract SignatureTest is Test {
 
     function testCanMintCombineBelowAndFailedAboveConstraint() public {
         bytes memory constraints =
-            bytes.concat(bytes.concat("\x00", notYetPassedDate), bytes.concat("\x01", notYetPassedDate));
+            bytes.concat(bytes.concat("\x00", NOT_YET_PASSED_DATA_AS_BYTES), bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is greater than required");
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
