@@ -4,7 +4,35 @@ import "solidity-bytes-utils/BytesLib.sol";
 import "openzeppelin-contracts/contracts/utils/Address.sol";
 import "forge-std/console.sol";
 
+enum ComparisonType {
+    Lower,
+    LowerOrEqual,
+    Greater,
+    GreaterOrEqual
+}
+
 library BytesExtractor {
+    function extractComparisonType(bytes memory data, uint256 start)
+        internal
+        pure
+        returns (ComparisonType cmp, uint256 newPosition)
+    {
+        uint8 _type = uint8(BytesLib.slice(data, start, 1)[0]);
+        newPosition = start + 1;
+
+        if (_type == uint8(0)) {
+            cmp = ComparisonType.Lower;
+        } else if (_type == uint8(1)) {
+            cmp = ComparisonType.LowerOrEqual;
+        } else if (_type == uint8(2)) {
+            cmp = ComparisonType.Greater;
+        } else if (_type == uint8(3)) {
+            cmp = ComparisonType.GreaterOrEqual;
+        } else {
+            revert("Comparison type invalid");
+        }
+    }
+
     function extractTimestamp(bytes memory data, uint256 start)
         internal
         pure
@@ -66,6 +94,48 @@ contract Constraint {
         parseAndExectueConstraint(sender, constraints);
     }
 
+    function handleBlockTimestamp(bytes calldata constraints, uint256 currentPosition)
+        internal
+        view
+        returns (uint256 newPosition)
+    {
+        ComparisonType cmp;
+        {
+            (ComparisonType _cmp, uint256 _newPosition) =
+                BytesExtractor.extractComparisonType(constraints, currentPosition);
+            currentPosition = _newPosition;
+            cmp = _cmp;
+        }
+
+        {
+            (uint256 timestamp, uint256 _newPosition) = BytesExtractor.extractTimestamp(constraints, currentPosition);
+
+            if (cmp == ComparisonType.Lower) {
+                require(timestamp > block.timestamp, "Block timestamp needs to be lower");
+            } else if (cmp == ComparisonType.LowerOrEqual) {
+                require(timestamp >= block.timestamp, "Block timestamp needs to be lower or equal");
+            } else if (cmp == ComparisonType.Greater) {
+                require(timestamp < block.timestamp, "Block timestamp needs to be greater");
+            } else if (cmp == ComparisonType.GreaterOrEqual) {
+                require(timestamp <= block.timestamp, "Block timestamp needs to be greater or equal");
+            }
+
+            newPosition = _newPosition;
+        }
+    }
+
+    function handleBalanceOfComparison(address sender, bytes calldata constraints, uint256 currentPosition)
+        internal
+        returns (uint256 newPosition)
+    {
+        (address extractedAddress, uint256 _newPosition) =
+            BytesExtractor.extractContractAddress(constraints, currentPosition + 1);
+
+        uint256 balance = TokenHelper.balanceOf(extractedAddress, sender);
+
+        newPosition = _newPosition;
+    }
+
     function parseAndExectueConstraint(address sender, bytes calldata constraints) private {
         require(constraints.length > 0, "No constrain to parse");
 
@@ -73,25 +143,12 @@ contract Constraint {
 
         while (currentPosition != constraints.length) {
             uint8 _type = uint8(constraints[currentPosition]);
+            currentPosition += 1;
 
             if (_type == uint8(0)) {
-                (uint256 timestamp, uint256 newPosition) =
-                    BytesExtractor.extractTimestamp(constraints, currentPosition + 1);
-                require(timestamp < block.timestamp, "Block timestamp constraint is greater than required");
-                currentPosition = newPosition;
+                currentPosition = handleBlockTimestamp(constraints, currentPosition);
             } else if (_type == uint8(1)) {
-                (uint256 timestamp, uint256 newPosition) =
-                    BytesExtractor.extractTimestamp(constraints, currentPosition + 1);
-                require(timestamp > block.timestamp, "Block timestamp constraint is lower than required");
-                currentPosition = newPosition;
-            } else if (_type == uint8(2)) {
-                (address extractedAddress, uint256 newPosition) =
-                    BytesExtractor.extractContractAddress(constraints, currentPosition + 1);
-
-                uint256 balance = TokenHelper.balanceOf(extractedAddress, sender);
-
-                console.log(balance);
-                currentPosition = newPosition;
+                currentPosition = handleBalanceOfComparison(sender, constraints, currentPosition);
             } else {
                 revert("Invalid constraint type");
             }

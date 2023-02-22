@@ -10,14 +10,14 @@ import "../src/AdvancedBadge.sol";
 import "./Constraint.t.sol";
 import "./SignatureUtils.t.sol";
 
-contract AdvancedBadgeTest is SignatureTestUtils {
+contract AdvancedBadgeTest is Test {
     event NewEvent(address indexed creator, bytes32 eventHash);
 
     uint256 private constant currentDate = 1676991391466;
 
-    bytes public validBlockTimestampAboveConstraint = bytes.concat("\x00", PASSED_DATE_AS_BYTES);
+    bytes public validBlockTimestampGreaterConstraint = bytes.concat("\x00\x02", PASSED_DATE_AS_BYTES);
 
-    bytes public validBlockTimestampBelowConstraint = bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES);
+    bytes public validBlockTimestampLowerConstraint = bytes.concat("\x00\x00", NOT_YET_PASSED_DATA_AS_BYTES);
 
     AdvancedBadge public badge;
     Constraint public ConstraintContract;
@@ -74,7 +74,7 @@ contract AdvancedBadgeTest is SignatureTestUtils {
 
     function testValidMintBadge() public {
         bytes memory validConstraints =
-            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+            bytes.concat(validBlockTimestampGreaterConstraint, validBlockTimestampLowerConstraint);
 
         AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
@@ -89,7 +89,7 @@ contract AdvancedBadgeTest is SignatureTestUtils {
 
     function testInvalidMintBadge() public {
         bytes memory validConstraints =
-            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+            bytes.concat(validBlockTimestampGreaterConstraint, validBlockTimestampLowerConstraint);
 
         AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
@@ -102,76 +102,77 @@ contract AdvancedBadgeTest is SignatureTestUtils {
 
     function testValidMintBadgeWithSignature() public {
         bytes memory validConstraints =
-            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+            bytes.concat(validBlockTimestampGreaterConstraint, validBlockTimestampLowerConstraint);
 
         AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(eventStruct);
+        badge.createEvent(eventStruct);
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        bytes memory signature = sign(user1PrivateKey, typedEventHash);
-        badge.mintBadgeWithSignature(user1, eventStruct, signature);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user1PrivateKey, typedEventHash);
+        badge.mintBadgeWithSignature(user1, eventStruct, v, r, s);
 
         assertEq(badge.ownerOf(0), user1);
     }
 
     function testValidMintBadgeWithSignatureUser2() public {
         bytes memory validConstraints =
-            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+            bytes.concat(validBlockTimestampGreaterConstraint, validBlockTimestampLowerConstraint);
 
         AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(eventStruct);
+        badge.createEvent(eventStruct);
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        bytes memory signature = sign(user2PrivateKey, typedEventHash);
-        badge.mintBadgeWithSignature(user2, eventStruct, signature);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user2PrivateKey, typedEventHash);
+        badge.mintBadgeWithSignature(user2, eventStruct, v, r, s);
 
         assertEq(badge.ownerOf(0), user2);
     }
 
     function testInvalidMintBadgeWithSignature() public {
         bytes memory validConstraints =
-            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+            bytes.concat(validBlockTimestampGreaterConstraint, validBlockTimestampLowerConstraint);
 
         AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(eventStruct);
+        badge.createEvent(eventStruct);
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        bytes memory signature = sign(creatorPrivateKey, typedEventHash); // use the wrong pirvate key
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user2PrivateKey, typedEventHash); // use the wwrong private key
 
         vm.expectRevert("Invalid Signature");
-        badge.mintBadgeWithSignature(user1, eventStruct, signature);
+        badge.mintBadgeWithSignature(user1, eventStruct, v, r, s);
     }
 
     function testValidBatchMintBadges() public {
         bytes memory validConstraints =
-            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+            bytes.concat(validBlockTimestampGreaterConstraint, validBlockTimestampLowerConstraint);
 
         AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(eventStruct);
+        badge.createEvent(eventStruct);
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        bytes memory signature1 = sign(user1PrivateKey, typedEventHash);
-        bytes memory signature2 = sign(user2PrivateKey, typedEventHash);
+        (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(user1PrivateKey, typedEventHash);
+
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(user2PrivateKey, typedEventHash);
 
         AdvancedBadge.Parameters[] memory params = new AdvancedBadge.Parameters[](2);
-        params[0] = AdvancedBadge.Parameters(user2, eventStruct, signature2);
-        params[1] = AdvancedBadge.Parameters(user1, eventStruct, signature1);
+        params[0] = AdvancedBadge.Parameters(user1, eventStruct, v1, r1, s1);
+        params[1] = AdvancedBadge.Parameters(user2, eventStruct, v2, r2, s2);
 
         badge.batchMintBadges(params);
 
-        assertEq(badge.ownerOf(0), user2);
-        assertEq(badge.ownerOf(1), user1);
+        assertEq(badge.ownerOf(0), user1);
+        assertEq(badge.ownerOf(1), user2);
     }
 }
