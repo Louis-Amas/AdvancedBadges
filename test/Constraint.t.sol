@@ -22,7 +22,7 @@ contract ConstraintTest is Test {
     function testCanMintCurrentDateAboveConstraint() public {
         bytes memory constraints = bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES));
 
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }
@@ -30,7 +30,7 @@ contract ConstraintTest is Test {
     function testCanMintCurrentDateBelownConstraint() public {
         bytes memory constraints = bytes.concat(bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES));
 
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }
@@ -39,7 +39,7 @@ contract ConstraintTest is Test {
         bytes memory constraints = bytes.concat(bytes.concat("\x00", NOT_YET_PASSED_DATA_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is greater than required");
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }
@@ -48,7 +48,7 @@ contract ConstraintTest is Test {
         bytes memory constraints = bytes.concat(bytes.concat("\x01", PASSED_DATE_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is lower than required");
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }
@@ -57,7 +57,7 @@ contract ConstraintTest is Test {
         bytes memory constraints =
             bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES), bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES));
 
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }
@@ -67,7 +67,7 @@ contract ConstraintTest is Test {
             bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES), bytes.concat("\x01", PASSED_DATE_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is lower than required");
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }
@@ -78,7 +78,7 @@ contract ConstraintTest is Test {
         );
 
         vm.expectRevert("Block timestamp constraint is greater than required");
-        bytes memory characteristics = constraint.canMint(msg.sender, constraints);
+        bytes memory characteristics = constraint.applyConstraint(msg.sender, constraints);
 
         assertEq(characteristics, "");
     }

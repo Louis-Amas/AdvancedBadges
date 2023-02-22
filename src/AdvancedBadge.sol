@@ -97,7 +97,7 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
 
         require(eventStruct.creator != address(0), "Event does not exists");
 
-        bytes memory characteristics = ConstraintContract.canMint(to, eventStruct.Constraints);
+        bytes memory characteristics = ConstraintContract.applyConstraint(to, eventStruct.Constraints);
 
         _mint(to, lastERC721Id);
         characteristicsByTokenId[lastERC721Id] = characteristics;
