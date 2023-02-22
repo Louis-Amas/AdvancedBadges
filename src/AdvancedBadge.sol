@@ -62,6 +62,20 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
         _mintBadge(msg.sender, eventHash);
     }
 
+    struct MintingParameters {
+        address signer;
+        Event eventStruct;
+        bytes signature;
+    }
+
+    function batchMintBadges(MintingParameters[] calldata mintingParameters) public {
+        for (uint256 i = 0; i < mintingParameters.length; ++i) {
+            mintBadgeWithSignature(
+                mintingParameters[i].signer, mintingParameters[i].eventStruct, mintingParameters[i].signature
+            );
+        }
+    }
+
     function mintBadgeWithSignature(address signer, Event calldata eventStruct, bytes calldata signature) public {
         (bytes32 eventHash, bytes32 typedEventHash) = getTypedDataHash(eventStruct);
 
