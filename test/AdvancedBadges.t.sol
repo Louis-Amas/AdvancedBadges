@@ -7,10 +7,7 @@ import "../src/AdvancedBadge.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 contract AdvancedBadgeTest is Test {
-    event NewEvent(
-        address indexed creator,
-        bytes32 eventHash
-    );
+    event NewEvent(address indexed creator, bytes32 eventHash);
 
     AdvancedBadge public badge;
 
@@ -39,7 +36,6 @@ contract AdvancedBadgeTest is Test {
         assertEq(_event.mintingConstraints, mintingConstraints);
     }
 
-
     function testCreateAlreadyExistingEvent() public {
         AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, "");
 
@@ -49,5 +45,4 @@ contract AdvancedBadgeTest is Test {
         vm.expectRevert("Event already exists");
         eventHash = badge.createEvent(_event);
     }
-
 }

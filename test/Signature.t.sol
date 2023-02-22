@@ -22,11 +22,7 @@ contract SignatureTest is Test {
 
         bytes memory joinSignature = bytes.concat(bytes.concat(r, s), "\x1b");
 
-        bool isValid = SignatureChecker.isValidSignatureNow(
-            creator,
-            hash,
-            joinSignature
-        );
+        bool isValid = SignatureChecker.isValidSignatureNow(creator, hash, joinSignature);
 
         assertEq(isValid, true);
     }
