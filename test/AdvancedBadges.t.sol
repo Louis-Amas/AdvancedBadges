@@ -10,7 +10,7 @@ import "../src/AdvancedBadge.sol";
 import "./Constraint.t.sol";
 import "./SignatureUtils.t.sol";
 
-contract AdvancedBadgeTest is Test {
+contract AdvancedBadgeTest is SignatureTestUtils {
     event NewEvent(address indexed creator, bytes32 eventHash);
 
     uint256 private constant currentDate = 1676991391466;
@@ -111,8 +111,9 @@ contract AdvancedBadgeTest is Test {
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user1PrivateKey, typedEventHash);
-        badge.mintBadgeWithSignature(user1, eventStruct, v, r, s);
+        bytes memory signature = sign(user1PrivateKey, typedEventHash);
+
+        badge.mintBadgeWithSignature(user1, eventStruct, signature);
 
         assertEq(badge.ownerOf(0), user1);
     }
@@ -128,8 +129,8 @@ contract AdvancedBadgeTest is Test {
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user2PrivateKey, typedEventHash);
-        badge.mintBadgeWithSignature(user2, eventStruct, v, r, s);
+        bytes memory signature = sign(user2PrivateKey, typedEventHash);
+        badge.mintBadgeWithSignature(user2, eventStruct, signature);
 
         assertEq(badge.ownerOf(0), user2);
     }
@@ -145,10 +146,10 @@ contract AdvancedBadgeTest is Test {
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(user2PrivateKey, typedEventHash); // use the wwrong private key
+        bytes memory signature = sign(user2PrivateKey, typedEventHash); // use the wwrong private key
 
         vm.expectRevert("Invalid Signature");
-        badge.mintBadgeWithSignature(user1, eventStruct, v, r, s);
+        badge.mintBadgeWithSignature(user1, eventStruct, signature);
     }
 
     function testValidBatchMintBadges() public {
@@ -162,13 +163,12 @@ contract AdvancedBadgeTest is Test {
 
         ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
 
-        (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(user1PrivateKey, typedEventHash);
-
-        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(user2PrivateKey, typedEventHash);
+        bytes memory signature1 = sign(user1PrivateKey, typedEventHash);
+        bytes memory signature2 = sign(user2PrivateKey, typedEventHash);
 
         AdvancedBadge.Parameters[] memory params = new AdvancedBadge.Parameters[](2);
-        params[0] = AdvancedBadge.Parameters(user1, eventStruct, v1, r1, s1);
-        params[1] = AdvancedBadge.Parameters(user2, eventStruct, v2, r2, s2);
+        params[0] = AdvancedBadge.Parameters(user1, eventStruct, signature1);
+        params[1] = AdvancedBadge.Parameters(user2, eventStruct, signature2);
 
         badge.batchMintBadges(params);
 
