@@ -5,9 +5,9 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
-import "../src/MintingConstraint.sol";
+import "../src/Constraint.sol";
 import "../src/AdvancedBadge.sol";
-import "./MintingConstraint.t.sol";
+import "./Constraint.t.sol";
 import "./SignatureUtils.t.sol";
 
 contract AdvancedBadgeTest is SignatureTestUtils {
@@ -20,7 +20,7 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     bytes public validBlockTimestampBelowConstraint = bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES);
 
     AdvancedBadge public badge;
-    MintingConstraint public mintingConstraintContract;
+    Constraint public ConstraintContract;
 
     uint256 internal creatorPrivateKey;
     address internal creator;
@@ -34,8 +34,8 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     function setUp() public {
         vm.warp(currentDate);
 
-        mintingConstraintContract = new MintingConstraint();
-        badge = new AdvancedBadge(address(mintingConstraintContract), "AdvancedBadge", "BDG");
+        ConstraintContract = new Constraint();
+        badge = new AdvancedBadge(address(ConstraintContract), "AdvancedBadge", "BDG");
 
         creatorPrivateKey = 0xabc;
         creator = vm.addr(creatorPrivateKey);
@@ -57,9 +57,9 @@ contract AdvancedBadgeTest is SignatureTestUtils {
         vm.prank(creator);
         bytes32 eventHash = badge.createEvent(eventStruct);
 
-        (address creatorAddr, bytes memory mintingConstraints) = badge.eventsByHash(eventHash);
+        (address creatorAddr, bytes memory Constraints) = badge.eventsByHash(eventHash);
         assertEq(eventStruct.creator, creatorAddr);
-        assertEq(eventStruct.mintingConstraints, mintingConstraints);
+        assertEq(eventStruct.Constraints, Constraints);
     }
 
     function testCreateAlreadyExistingEvent() public {
@@ -149,9 +149,9 @@ contract AdvancedBadgeTest is SignatureTestUtils {
 
         bytes memory signature2 = sign(user2PrivateKey, typedEventHash);
 
-        AdvancedBadge.MintingParameters[] memory params = new AdvancedBadge.MintingParameters[](2);
-        params[0] = AdvancedBadge.MintingParameters(user1, eventStruct, signature1);
-        params[1] = AdvancedBadge.MintingParameters(user2, eventStruct, signature2);
+        AdvancedBadge.Parameters[] memory params = new AdvancedBadge.Parameters[](2);
+        params[0] = AdvancedBadge.Parameters(user1, eventStruct, signature1);
+        params[1] = AdvancedBadge.Parameters(user2, eventStruct, signature2);
 
         badge.batchMintBadges(params);
 

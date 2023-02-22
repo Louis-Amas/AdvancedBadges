@@ -3,18 +3,18 @@ pragma solidity ^0.8.0;
 import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/SignatureChecker.sol";
 import "openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
-import "./MintingConstraint.sol";
+import "./Constraint.sol";
 import "./SignatureUtils.sol";
 
 contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
-    MintingConstraint private mintingConstraintContract;
+    Constraint private ConstraintContract;
 
     struct Event {
         address creator;
-        bytes mintingConstraints;
+        bytes Constraints;
     }
 
-    bytes32 public constant BADGE_TYPE_HASH = keccak256("Event(address creator,bytes mintingConstraints)");
+    bytes32 public constant BADGE_TYPE_HASH = keccak256("Event(address creator,bytes Constraints)");
 
     event NewEvent(address indexed creator, bytes32 eventHash);
 
@@ -25,15 +25,15 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
     // TokenId to  characteristics
     mapping(uint256 => bytes) public characteristicsByTokenId;
 
-    constructor(address mintingConstraintAddress, string memory name, string memory symbol)
+    constructor(address ConstraintAddress, string memory name, string memory symbol)
         EIP712("AdvancedBadge", "1")
         ERC721(name, symbol)
     {
-        mintingConstraintContract = MintingConstraint(mintingConstraintAddress);
+        ConstraintContract = Constraint(ConstraintAddress);
     }
 
     function getStructHash(Event memory _event) internal pure returns (bytes32) {
-        return keccak256(abi.encode(BADGE_TYPE_HASH, _event.creator, _event.mintingConstraints));
+        return keccak256(abi.encode(BADGE_TYPE_HASH, _event.creator, _event.Constraints));
     }
 
     function getTypedDataHash(Event memory _event) public view returns (bytes32 eventHash, bytes32 typedDataHash) {
@@ -50,7 +50,7 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
         require(_event.creator == msg.sender, "Creator needs to be msg.sender");
 
         eventStruct.creator = _event.creator;
-        eventStruct.mintingConstraints = _event.mintingConstraints;
+        eventStruct.Constraints = _event.Constraints;
 
         eventsByHash[eventHash] = eventStruct;
 
@@ -62,17 +62,15 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
         _mintBadge(msg.sender, eventHash);
     }
 
-    struct MintingParameters {
+    struct Parameters {
         address signer;
         Event eventStruct;
         bytes signature;
     }
 
-    function batchMintBadges(MintingParameters[] calldata mintingParameters) public {
-        for (uint256 i = 0; i < mintingParameters.length; ++i) {
-            mintBadgeWithSignature(
-                mintingParameters[i].signer, mintingParameters[i].eventStruct, mintingParameters[i].signature
-            );
+    function batchMintBadges(Parameters[] calldata parameters) public {
+        for (uint256 i = 0; i < parameters.length; ++i) {
+            mintBadgeWithSignature(parameters[i].signer, parameters[i].eventStruct, parameters[i].signature);
         }
     }
 
@@ -96,7 +94,7 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
 
         require(eventStruct.creator != address(0), "Event does not exists");
 
-        bytes memory characteristics = mintingConstraintContract.canMint(to, eventStruct.mintingConstraints);
+        bytes memory characteristics = ConstraintContract.canMint(to, eventStruct.Constraints);
 
         _mint(to, lastERC721Id);
         characteristicsByTokenId[lastERC721Id] = characteristics;

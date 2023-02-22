@@ -7,15 +7,15 @@ import "forge-std/console.sol";
 
 struct Event {
     address creator;
-    bytes mintingConstraints;
+    bytes Constraints;
 }
 
 contract AdvancedBadgeSigUtils is EIP712("AdvancedBadges", "1") {
-    bytes32 public constant BADGE_TYPE_HASH = keccak256("Event(address creator,bytes mintingConstraints)");
+    bytes32 public constant BADGE_TYPE_HASH = keccak256("Event(address creator,bytes Constraints)");
 
     // computes the hash of a permit
     function getStructHash(Event memory _event) internal pure returns (bytes32) {
-        return keccak256(abi.encode(BADGE_TYPE_HASH, _event.creator, _event.mintingConstraints));
+        return keccak256(abi.encode(BADGE_TYPE_HASH, _event.creator, _event.Constraints));
     }
 
     // computes the hash of the fully encoded EIP-712 message for the domain, which can be used to recover the signer

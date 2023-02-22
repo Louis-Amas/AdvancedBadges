@@ -15,7 +15,7 @@ library BytesExtractor {
     }
 }
 
-contract MintingConstraint {
+contract Constraint {
     function canMint(address sender, bytes calldata constraints) public view returns (bytes memory characteristics) {
         if (constraints.length == 0) {
             return characteristics;
