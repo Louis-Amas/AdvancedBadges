@@ -42,38 +42,38 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     }
 
     function testCreateEvent() public {
-        AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, "");
+        AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, "");
 
         vm.expectEmit(true, true, false, false);
 
         emit NewEvent(creator, "");
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(_event);
+        bytes32 eventHash = badge.createEvent(eventStruct);
 
         (address creatorAddr, bytes memory mintingConstraints) = badge.eventsByHash(eventHash);
-        assertEq(_event.creator, creatorAddr);
-        assertEq(_event.mintingConstraints, mintingConstraints);
+        assertEq(eventStruct.creator, creatorAddr);
+        assertEq(eventStruct.mintingConstraints, mintingConstraints);
     }
 
     function testCreateAlreadyExistingEvent() public {
-        AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, "");
+        AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, "");
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(_event);
+        bytes32 eventHash = badge.createEvent(eventStruct);
 
         vm.expectRevert("Event already exists");
-        eventHash = badge.createEvent(_event);
+        eventHash = badge.createEvent(eventStruct);
     }
 
     function testValidMintBadge() public {
         bytes memory validConstraints =
             bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
-        AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
+        AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(_event);
+        bytes32 eventHash = badge.createEvent(eventStruct);
 
         vm.prank(user);
         badge.mintBadge(user, eventHash);
@@ -85,10 +85,10 @@ contract AdvancedBadgeTest is SignatureTestUtils {
         bytes memory validConstraints =
             bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
-        AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
+        AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(_event);
+        bytes32 eventHash = badge.createEvent(eventStruct);
 
         vm.expectRevert("Only sender can mint badge");
         badge.mintBadge(user, eventHash);
@@ -98,13 +98,15 @@ contract AdvancedBadgeTest is SignatureTestUtils {
         bytes memory validConstraints =
             bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
-        AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
+        AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(_event);
+        bytes32 eventHash = badge.createEvent(eventStruct);
 
-        bytes memory signature = sign(userPrivateKey, eventHash);
-        badge.mintBadgeWithSignature(user, eventHash, signature);
+        ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
+
+        bytes memory signature = sign(userPrivateKey, typedEventHash);
+        badge.mintBadgeWithSignature(user, eventStruct, signature);
 
         assertEq(badge.ownerOf(0), user);
     }
@@ -113,14 +115,16 @@ contract AdvancedBadgeTest is SignatureTestUtils {
         bytes memory validConstraints =
             bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
-        AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
+        AdvancedBadge.Event memory eventStruct = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
-        bytes32 eventHash = badge.createEvent(_event);
+        bytes32 eventHash = badge.createEvent(eventStruct);
 
-        bytes memory signature = sign(creatorPrivateKey, eventHash); // signing with the wrong private key
+        ( /*bytes32 eventHash*/ , bytes32 typedEventHash) = badge.getTypedDataHash(eventStruct);
+
+        bytes memory signature = sign(creatorPrivateKey, typedEventHash); // use the wrong pirvate key
 
         vm.expectRevert("Invalid Signature");
-        badge.mintBadgeWithSignature(user, eventHash, signature);
+        badge.mintBadgeWithSignature(user, eventStruct, signature);
     }
 }
