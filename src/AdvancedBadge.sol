@@ -75,7 +75,9 @@ contract AdvancedBadge is EIP712, ERC721Enumerable, SignatureUtils {
 
     function batchMintBadges(Parameters[] calldata parameters) public {
         for (uint256 i = 0; i < parameters.length; ++i) {
-            mintBadgeWithSignature(parameters[i].signer, parameters[i].eventStruct, parameters[i].v, parameters[i].r, parameters[i].s);
+            mintBadgeWithSignature(
+                parameters[i].signer, parameters[i].eventStruct, parameters[i].v, parameters[i].r, parameters[i].s
+            );
         }
     }
 
