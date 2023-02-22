@@ -7,14 +7,16 @@ import "../src/MintingConstraint.sol";
 
 contract SignatureTest is Test {
     bytes private constant passedDate = "\x00\x00\x01\x86\x74\x70\xd6\x67";
+
     bytes private constant notYetPassedDate = "\x00\x00\x02\x03\x5c\x0e\xa0\xe0";
+
     uint256 private constant currentDate = 1676991391466;
 
     MintingConstraint mintingConstraint;
 
     function setUp() public {
+        vm.warp(currentDate);
         mintingConstraint = new MintingConstraint();
-        vm.warp(1676991391466);
     }
 
     function testCanMintCurrentDateAboveConstraint() public {
