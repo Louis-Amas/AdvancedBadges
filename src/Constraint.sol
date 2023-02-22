@@ -7,6 +7,7 @@ import "forge-std/console.sol";
 library BytesExtractor {
     function extractTimestamp(bytes memory data, uint256 start)
         internal
+        pure
         returns (uint256 timestamp, uint256 newPosition)
     {
         bytes memory timestampAsBytes = BytesLib.slice(data, start, 8);
@@ -17,6 +18,7 @@ library BytesExtractor {
 
     function extractAddress(bytes memory data, uint256 start)
         internal
+        pure
         returns (address extractedAddress, uint256 newPosition)
     {
         bytes memory addressAsBytes = BytesLib.slice(data, start, 20);
@@ -29,6 +31,7 @@ library BytesExtractor {
 
     function extractContractAddress(bytes memory data, uint256 start)
         internal
+        pure
         returns (address extractedAddress, uint256 newPosition)
     {
         (address _extractedAddress, uint256 _newPosition) = extractAddress(data, start);
