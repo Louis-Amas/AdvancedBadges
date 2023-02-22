@@ -24,8 +24,8 @@ contract AdvancedBadge is ERC721Enumerable, SignatureUtils {
     // TokenId to  characteristics
     mapping(uint256 => bytes) public characteristicsByTokenId;
 
-    constructor(address mintingConstraintAddress, string memory name, string memory symbol) ERC721(name, symbol) { 
-        mintingConstraintContract = MintingConstraint(mintingConstraintAddress); 
+    constructor(address mintingConstraintAddress, string memory name, string memory symbol) ERC721(name, symbol) {
+        mintingConstraintContract = MintingConstraint(mintingConstraintAddress);
     }
 
     function getStructHash(Event memory _event) internal pure returns (bytes32) {
@@ -48,9 +48,9 @@ contract AdvancedBadge is ERC721Enumerable, SignatureUtils {
         emit NewEvent(_event.creator, eventHash);
     }
 
-    function mintBadgeWithSignature(address signer, bytes32 eventHash, bytes calldata signature)  
+    function mintBadgeWithSignature(address signer, bytes32 eventHash, bytes calldata signature)
+        public
         SignatureUtils.verifySignature(signer, eventHash, signature)
-        public 
     {
         mintBadge(signer, eventHash);
     }

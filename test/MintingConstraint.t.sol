@@ -63,7 +63,8 @@ contract MintingConstraintTest is Test {
     }
 
     function testCanMintCombineFailedBelowAndAboveConstraint() public {
-        bytes memory constraints = bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES), bytes.concat("\x01", PASSED_DATE_AS_BYTES));
+        bytes memory constraints =
+            bytes.concat(bytes.concat("\x00", PASSED_DATE_AS_BYTES), bytes.concat("\x01", PASSED_DATE_AS_BYTES));
 
         vm.expectRevert("Block timestamp constraint is lower than required");
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);
@@ -72,8 +73,9 @@ contract MintingConstraintTest is Test {
     }
 
     function testCanMintCombineBelowAndFailedAboveConstraint() public {
-        bytes memory constraints =
-            bytes.concat(bytes.concat("\x00", NOT_YET_PASSED_DATA_AS_BYTES), bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES));
+        bytes memory constraints = bytes.concat(
+            bytes.concat("\x00", NOT_YET_PASSED_DATA_AS_BYTES), bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES)
+        );
 
         vm.expectRevert("Block timestamp constraint is greater than required");
         bytes memory characteristics = mintingConstraint.canMint(msg.sender, constraints);

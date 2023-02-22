@@ -7,7 +7,7 @@ import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 import "../src/MintingConstraint.sol";
 import "../src/AdvancedBadge.sol";
-import './MintingConstraint.t.sol';
+import "./MintingConstraint.t.sol";
 import "./SignatureUtils.t.sol";
 
 contract AdvancedBadgeTest is SignatureTestUtils {
@@ -16,6 +16,7 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     uint256 private constant currentDate = 1676991391466;
 
     bytes public validBlockTimestampAboveConstraint = bytes.concat("\x00", PASSED_DATE_AS_BYTES);
+
     bytes public validBlockTimestampBelowConstraint = bytes.concat("\x01", NOT_YET_PASSED_DATA_AS_BYTES);
 
     AdvancedBadge public badge;
@@ -23,7 +24,6 @@ contract AdvancedBadgeTest is SignatureTestUtils {
 
     uint256 internal creatorPrivateKey;
     address internal creator;
-
 
     uint256 internal userPrivateKey;
     address internal user;
@@ -67,7 +67,8 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     }
 
     function testValidMintBadge() public {
-        bytes memory validConstraints = bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+        bytes memory validConstraints =
+            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
         AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
 
@@ -81,7 +82,8 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     }
 
     function testInvalidMintBadge() public {
-        bytes memory validConstraints = bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+        bytes memory validConstraints =
+            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
         AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
 
@@ -93,21 +95,23 @@ contract AdvancedBadgeTest is SignatureTestUtils {
     }
 
     function testValidMintBadgeWithSignature() public {
-        bytes memory validConstraints = bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+        bytes memory validConstraints =
+            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
         AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
 
         vm.prank(creator);
         bytes32 eventHash = badge.createEvent(_event);
 
-        bytes memory signature = sign(userPrivateKey, eventHash); 
+        bytes memory signature = sign(userPrivateKey, eventHash);
         badge.mintBadgeWithSignature(user, eventHash, signature);
 
         assertEq(badge.ownerOf(0), user);
     }
 
     function testInvalidMintBadgeWithSignature() public {
-        bytes memory validConstraints = bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
+        bytes memory validConstraints =
+            bytes.concat(validBlockTimestampAboveConstraint, validBlockTimestampBelowConstraint);
 
         AdvancedBadge.Event memory _event = AdvancedBadge.Event(creator, validConstraints);
 

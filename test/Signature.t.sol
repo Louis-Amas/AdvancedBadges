@@ -19,7 +19,7 @@ contract SignatureTest is SignatureTestUtils {
     function testSignature() public {
         bytes32 hash = keccak256("Test...");
 
-        bytes memory signature = SignatureTestUtils.sign(creatorPrivateKey, hash); 
+        bytes memory signature = SignatureTestUtils.sign(creatorPrivateKey, hash);
 
         bool isValid = SignatureChecker.isValidSignatureNow(creator, hash, signature);
 
